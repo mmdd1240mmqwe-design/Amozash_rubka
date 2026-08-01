@@ -1232,6 +1232,9 @@ async def job_ai_tick(context: ContextTypes.DEFAULT_TYPE):
     game = get_game(chat_id)
     if not game or game["status"] != "active":
         return
+    # Passive tax income for every living country (human-controlled too)
+    for country in get_countries(chat_id, alive_only=True):
+        economy_tick(country)
     messages = run_ai_tick(chat_id, difficulty=game["difficulty"])
     bump_tick(chat_id)
     for m in messages:
