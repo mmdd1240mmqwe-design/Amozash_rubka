@@ -835,27 +835,27 @@ async def require_my_country(update: Update):
 # ---------------------------------------------------------------------------
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
-        "🌍 *War & Diplomacy Bot*\n\n"
-        "*شروع بازی*\n"
-        "/newgame `[easy|normal|hard|nightmare]` — ساخت بازی جدید\n"
-        "/join `[نام کشور]` — وارد شدن به بازی\n"
+        "🌍 War & Diplomacy Bot\n\n"
+        "شروع بازی:\n"
+        "/newgame [easy|normal|hard|nightmare] — ساخت بازی جدید\n"
+        "/join [نام کشور] — وارد شدن به بازی\n"
         "/startgame — شروع رسمی بازی (بقیه‌ی کشورها با AI پر می‌شن)\n\n"
-        "*اطلاعات*\n"
+        "اطلاعات:\n"
         "/status — وضعیت کشور خودت\n"
         "/world — وضعیت همه‌ی کشورها\n\n"
-        "*اقتصاد*\n"
-        "/tax `low|medium|high` — تنظیم مالیات\n"
-        "/spend `category amount` — هزینه (military, education, healthcare, propaganda, research)\n"
+        "اقتصاد:\n"
+        "/tax low|medium|high — تنظیم مالیات\n"
+        "/spend category amount — هزینه (military, education, healthcare, propaganda, research)\n"
         "/daily — جایزه‌ی روزانه\n\n"
-        "*نظامی و جاسوسی*\n"
-        "/attack `نام کشور` — حمله نظامی\n"
-        "/spy `نام کشور` — عملیات جاسوسی\n\n"
-        "*دیپلماسی*\n"
-        "/alliance `نام کشور` — پیشنهاد اتحاد\n"
-        "/alliance_accept `نام کشور` — قبول اتحاد\n"
-        "/betray `نام کشور` — خیانت به متحد\n"
+        "نظامی و جاسوسی:\n"
+        "/attack نام کشور — حمله نظامی\n"
+        "/spy نام کشور — عملیات جاسوسی\n\n"
+        "دیپلماسی:\n"
+        "/alliance نام کشور — پیشنهاد اتحاد\n"
+        "/alliance_accept نام کشور — قبول اتحاد\n"
+        "/betray نام کشور — خیانت به متحد\n"
     )
-    await update.effective_message.reply_text(text, parse_mode="Markdown")
+    await update.effective_message.reply_text(text)
 
 
 async def cmd_newgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -882,11 +882,11 @@ async def cmd_newgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_countries(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     taken = taken_names(chat_id)
-    lines = ["🗺 *کشورهای موجود:*"]
+    lines = ["🗺 کشورهای موجود:"]
     for flag, name in COUNTRY_POOL:
         mark = "❌" if name in taken else "✅"
         lines.append(f"{mark} {flag} {name}")
-    await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.effective_message.reply_text("\n".join(lines))
 
 
 async def cmd_join(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -960,13 +960,13 @@ async def cmd_startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     set_game_status(chat_id, "active")
 
     countries = get_countries(chat_id)
-    lines = ["🚩 *بازی شروع شد!*\n", "کشورهای این دور:"]
+    lines = ["🚩 بازی شروع شد!\n", "کشورهای این دور:"]
     for c in countries:
         tag = "👤 بازیکن" if not c["is_ai"] else f"🤖 AI ({c['personality']})"
         lines.append(f"{c['flag']} {c['name']} — {tag}")
     lines.append("\nهر چند دقیقه یک‌بار اتفاقات، اخبار و حرکات AI توی گروه پست می‌شه.")
     lines.append("برای دستورات: /help")
-    await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.effective_message.reply_text("\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
@@ -992,13 +992,13 @@ async def cmd_world(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not countries:
         await update.effective_message.reply_text("هنوز کشوری توی بازی نیست.")
         return
-    lines = ["🌐 *وضعیت جهان:*"]
+    lines = ["🌐 وضعیت جهان:"]
     for c in sorted(countries, key=lambda x: -x["military"]):
         owner = "🤖 AI" if c["is_ai"] else (c["owner_name"] or "بازیکن")
         lines.append(
-            f"{c['flag']} *{c['name']}* ({owner}) — 💰{c['treasury']} ⚔️{c['military']} 😊{c['happiness']}%"
+            f"{c['flag']} {c['name']} ({owner}) — 💰{c['treasury']} ⚔️{c['military']} 😊{c['happiness']}%"
         )
-    await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.effective_message.reply_text("\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
@@ -1308,6 +1308,10 @@ async def on_startup(application: Application):
         logger.info("Resumed jobs for chat %s", game["chat_id"])
 
 
+async def on_error(update, context: ContextTypes.DEFAULT_TYPE):
+    logger.error("Unhandled exception while processing update %s", update, exc_info=context.error)
+
+
 def main():
     token = os.environ.get("BOT_TOKEN")
     if not token:
@@ -1336,6 +1340,7 @@ def main():
     application.add_handler(CommandHandler("alliance", cmd_alliance))
     application.add_handler(CommandHandler("alliance_accept", cmd_alliance_accept))
     application.add_handler(CommandHandler("betray", cmd_betray))
+    application.add_error_handler(on_error)
 
     logger.info("Bot starting (polling)...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
