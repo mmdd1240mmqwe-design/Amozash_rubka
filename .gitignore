@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+genesis.db
+venv/
+.venv/
