@@ -155,7 +155,8 @@ import json
 import time
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "data", "warbot.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "warbot.db")
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 
 def get_conn():
